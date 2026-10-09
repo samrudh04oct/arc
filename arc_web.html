@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARC Drive — Security Beyond the Host</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--c:#22d3ee;--b:#3b82f6}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{background:#030507;color:#f4f7fa;font-family:"Inter","Helvetica Neue",Arial,sans-serif;margin:0;overflow-x:hidden}
+.g{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(14px);border-radius:14px;transition:border-color .25s,transform .25s}
+.g:hover{border-color:rgba(34,211,238,.45)}
+.rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}.rv.in{opacity:1;transform:none}
+.h{font-weight:800;letter-spacing:-.04em;line-height:.95}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+.glow{box-shadow:0 0 40px rgba(34,211,238,.25),inset 0 0 20px rgba(34,211,238,.08)}
+.fl{width:2px;height:36px;margin:0 auto;background:linear-gradient(180deg,transparent,var(--c),transparent);background-size:100% 200%;animation:fl 1.4s linear infinite}
+.dash{stroke-dasharray:6 6;animation:dd 1s linear infinite}
+@keyframes fl{to{background-position:0 -200%}}@keyframes dd{to{stroke-dashoffset:-12}}
+@keyframes pu{50%{opacity:.4}}.pu{animation:pu 2s infinite}
+.grid-bg{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(circle at 60% 40%,#000,transparent 70%)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+const cy="text-cyan-300";
+function R({children,className=""}){const r=useRef();const[v,s]=useState(false);
+useEffect(()=>{const o=new IntersectionObserver(e=>{if(e[0].isIntersecting){s(true);o.disconnect()}},{threshold:.1});o.observe(r.current);return()=>o.disconnect()},[]);
+return <div ref={r} className={`rv ${v?"in":""} ${className}`}>{children}</div>}
+const Sec=({id,children,className=""})=><section id={id} className={`relative px-6 md:px-16 py-24 md:py-32 max-w-7xl mx-auto ${className}`}>{children}</section>;
+const Tag=({children})=><div className={`mono text-xs tracking-widest ${cy} mb-5`}>{children}</div>;
+const Title=({children,sub})=><R><h2 className="h text-5xl md:text-7xl mb-6 whitespace-pre-line">{children}</h2>{sub&&<p className="text-white/60 text-lg max-w-2xl mb-12">{sub}</p>}</R>;
+const Btn=({href,children,solid})=><a href={href} className={`px-7 py-3.5 rounded-full text-sm font-medium transition ${solid?"bg-cyan-300 text-black hover:bg-white":"border border-white/25 hover:border-cyan-300 hover:text-cyan-300"}`}>{children}</a>;
+
+function Nav(){const[s,set]=useState(false);
+useEffect(()=>{const f=()=>set(scrollY>40);f();addEventListener("scroll",f);return()=>removeEventListener("scroll",f)},[]);
+const L=[["Overview","overview"],["Problem","problem"],["Research","research"],["Architecture","architecture"],["Security","security"],["Roadmap","roadmap"]];
+return <nav className={`fixed z-50 left-0 right-0 flex items-center justify-between px-6 md:px-12 h-16 transition-all ${s?"bg-black/50 backdrop-blur-xl border-b border-white/10":""}`} style={{top:"env(safe-area-inset-top,0px)"}}>
+<a href="#top" className="font-extrabold tracking-[.25em] text-sm">ARC <span className={cy}>DRIVE</span></a>
+<div className="hidden lg:flex gap-7 text-sm text-white/60">{L.map(([n,i])=><a key={i} href={"#"+i} className="hover:text-white transition">{n}</a>)}</div>
+</nav>}
+
+function HeroViz(){
+const P=(x,y,w,t,h=30)=><g key={t}><rect x={x} y={y} width={w} height={h} rx={h/2} fill="#0a141c" stroke="#22d3ee66"/><text x={x+w/2} y={y+h/2} textAnchor="middle" dominantBaseline="central" fill="#cfe9f1" fontSize="10" letterSpacing="2">{t}</text></g>;
+const L=[["IDENTITY",150],["HOST",196],["BEHAVIOR",242]],Rr=[["TAMPER",173],["POLICY",219]];
+return <svg viewBox="0 0 460 490" className="w-full max-w-md mx-auto">
+<defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#22d3ee"/><stop offset="1" stopColor="#3b82f6"/></linearGradient><radialGradient id="rg"><stop offset="0" stopColor="#22d3ee" stopOpacity=".18"/><stop offset="1" stopColor="#22d3ee" stopOpacity="0"/></radialGradient></defs>
+<circle cx="230" cy="230" r="210" fill="url(#rg)"/><circle cx="230" cy="230" r="190" fill="none" stroke="#ffffff10"/><circle cx="230" cy="230" r="150" fill="none" stroke="#ffffff0d" strokeDasharray="2 6"/>
+<rect x="165" y="10" width="130" height="44" rx="10" fill="#0a141c" stroke="#ffffff44"/><text x="230" y="32" textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize="12" letterSpacing="4">HOST</text>
+<line x1="230" y1="54" x2="230" y2="170" stroke="#22d3ee" className="dash"/><line x1="230" y1="290" x2="230" y2="426" stroke="#22d3ee" className="dash"/>
+{L.map(([t,y])=><path key={t} d={`M115 ${y+15} C135 ${y+15},120 230,140 230`} fill="none" stroke="#22d3ee88" className="dash"/>)}
+{Rr.map(([t,y])=><path key={t} d={`M345 ${y+15} C325 ${y+15},340 230,320 230`} fill="none" stroke="#22d3ee88" className="dash"/>)}
+{L.map(([t,y])=>P(5,y,110,t))}{Rr.map(([t,y])=>P(345,y,110,t))}
+<rect x="140" y="170" width="180" height="120" rx="16" fill="#06121a" stroke="url(#lg)" strokeWidth="1.5" className="glow"/>
+<text x="230" y="218" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="800" fontSize="20" letterSpacing="4">ARC DRIVE</text>
+<text x="230" y="246" textAnchor="middle" dominantBaseline="central" fill="#22d3ee" fontSize="9" letterSpacing="3">CONTROL LAYER</text>
+<circle cx="230" cy="268" r="3" fill="#22d3ee" className="pu"/>
+<rect x="145" y="426" width="170" height="48" rx="10" fill="#0a141c" stroke="#ffffff44"/><text x="230" y="450" textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize="10" letterSpacing="3">PROTECTED RESOURCE</text></svg>}
+
+function Hero(){return <header id="top" className="relative min-h-screen flex items-center px-6 md:px-16 pt-24 overflow-hidden">
+<div className="absolute inset-0 grid-bg"/><div className="absolute -right-40 top-10 w-[600px] h-[600px] rounded-full bg-cyan-500/10 blur-3xl"/>
+<div className="relative max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
+<div><Tag>HARDWARE SECURITY PROJECT</Tag>
+<h1 className="h text-6xl md:text-8xl">SECURITY<br/>BEYOND<br/>THE HOST.</h1>
+<p className="mt-6 text-xl text-white/80">An independent access-control layer for protected resources.</p>
+<p className="mt-4 text-white/55 max-w-xl leading-relaxed">ARC Drive explores a hardware-enforced approach to dynamic access control by combining authentication, host state, behavioral monitoring, security policy and tamper response.</p>
+<div className="mt-9 flex flex-wrap gap-4"><Btn href="#overview" solid>Explore the Project</Btn></div>
+<p className="mono text-xs text-white/40 mt-10">Powered by Intelligence. Protected by Time.</p></div>
+<HeroViz/></div></header>}
+
+function Intro(){const C=[["01","INDEPENDENT","Designed as a security layer outside the host environment."],["02","DYNAMIC","Access decisions can change according to security conditions."],["03","RESPONSIVE","Suspicious behavior or tampering can trigger restriction or lock actions."]];
+return <Sec id="overview"><Tag>OVERVIEW</Tag><Title>WHAT IS ARC DRIVE?</Title>
+<R><p className="text-xl text-white/70 max-w-3xl mb-4">ARC Drive is a hardware security project exploring dynamic, policy-driven access control for protected resources.</p>
+<p className="text-white/50 max-w-3xl mb-12">The concept is built around an independent control layer rather than relying entirely on software running inside the host.</p></R>
+<div className="grid md:grid-cols-3 gap-5">{C.map(([n,t,d])=><R key={n}><div className="g p-8 h-full"><div className={`mono ${cy} text-sm`}>{n}</div><div className="text-2xl font-bold mt-12 mb-3 tracking-wide">{t}</div><p className="text-white/55">{d}</p></div></R>)}</div>
+<p className="mono text-xs text-white/40 mt-6">Prototype under development.</p></Sec>}
+
+function Problem(){const E=["IDENTITY","ENDPOINT","DLP","NETWORK","SIEM","PHYSICAL SECURITY"];
+return <Sec id="problem"><Tag>THE PROBLEM</Tag><Title>THE SECURITY GAP</Title>
+<R><p className="text-2xl text-white/80 mb-10 max-w-3xl">Modern security is powerful — but often distributed across multiple layers.</p></R>
+<R><div className="flex flex-wrap items-center gap-2 mb-10">{E.map((e,i)=><React.Fragment key={e}><div className="g px-5 py-3 mono text-xs tracking-widest flex items-center justify-center">{e}</div>{i<E.length-1&&<span className={cy}>→</span>}</React.Fragment>)}</div></R>
+<R><p className="text-white/60 max-w-3xl">These systems can specialize in authentication, monitoring, detection, network control, or physical access. ARC Drive explores whether these signals can be combined into an independent resource-access decision layer. Designed for different security layers.</p></R></Sec>}
+
+function Existing(){const C=[["Identity & Access Management","Microsoft Entra ID · Okta · Active Directory","Authentication and permissions.","A valid identity may still be used from a compromised or unknown host."],["Endpoint Security","","Monitoring activity on the host.","The control exists within the host environment."],["DLP","","Detecting and preventing data movement.","Depends on endpoint visibility, classification and supported environments."],["SIEM / UEBA","","Detection, correlation and alerting.","Response may require investigation after suspicious activity is detected."],["Hardware Security Keys","","Strong authentication.","Authentication does not necessarily mean continuous resource control."]];
+return <Sec id="research"><Tag>RESEARCH</Tag><Title>{"WHERE EXISTING\nAPPROACHES STOP"}</Title>
+<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{C.map(([t,ex,f,g])=><R key={t}><div className="g p-6 h-full"><div className="font-bold text-lg mb-1">{t}</div><div className="text-xs text-white/40 mb-4 min-h-4">{ex}</div>
+<div className="mono text-[10px] text-white/40 tracking-widest">FOCUS</div><p className="text-white/70 mb-4">{f}</p><div className={`mono text-[10px] tracking-widest ${cy}`}>GAP RELEVANT TO ARC DRIVE</div><p className="text-white/55">{g}</p></div></R>)}
+<R><div className="g p-6 h-full glow border-cyan-300/30"><div className="mono text-[10px] text-white/40 tracking-widest mb-2">EXISTING SECURITY</div><p className="text-white/70 text-sm">Identity · Endpoint · Network · Detection · Physical</p><div className="fl my-3"/><div className={`mono text-[10px] tracking-widest ${cy}`}>ARC DRIVE CONCEPT</div><div className="font-bold text-lg">Unified Access Decision Layer</div></div></R></div></Sec>}
+
+function Approach(){const S=["AUTHENTICATE","VERIFY","MONITOR","EVALUATE","DECIDE","ALLOW / RESTRICT / LOCK"];
+return <Sec><Tag>OUR APPROACH</Tag><Title>{"FROM DETECTION\nTO DECISION."}</Title>
+<R><div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">{S.map((s,i)=><div key={s} className={`g p-4 min-h-16 flex items-center justify-center mono text-[11px] tracking-wider text-center ${i==5?"border-cyan-300/50 text-cyan-300":""}`}>{s}</div>)}</div>
+<p className="text-white/60 max-w-2xl">ARC Drive explores converting multiple security signals into an immediate access-control decision.</p></R></Sec>}
+
+const NODES={auth:["User Authentication","Confirms who is requesting access."],host:["Host State","Describes the system the request comes from."],beh:["Behavior","Activity compared against expected patterns."],tam:["Tamper Signal","Physical manipulation of the controller."],pol:["Security Policy","Configured rules for access."],ctl:["ARC Drive Controller","The independent layer that gathers signals and enforces the decision."],eng:["Policy Engine","Evaluates all signals against policy."],dec:["Access Decision","The single outcome sent to the resource gate."],res:["Protected Resource","The resource gated by the controller."],ok:["Access Granted","All signals satisfy policy."],rs:["Access Restricted","Policy triggered by an anomaly: limited access."],lk:["Access Locked","Tamper or manual lock: access denied."]};
+function Arch(){const[h,sh]=useState("ctl");
+const B={auth:[40,10,150],host:[216,10,150],beh:[392,10,150],tam:[568,10,150],pol:[744,10,150],ctl:[330,120,260,64],eng:[360,230,200],dec:[360,320,200],ok:[190,400,180,42],rs:[370,400,180,42],lk:[550,400,180,42],res:[360,486,200]};
+const tone={ok:"#34d399",rs:"#fbbf24",lk:"#fb7185"};
+const Nd=({k})=>{const[x,y,w,ht=46]=B[k],on=h==k,c=tone[k]||"#22d3ee";return <g onMouseEnter={()=>sh(k)} onClick={()=>sh(k)} style={{cursor:"pointer"}}>
+<rect x={x} y={y} width={w} height={ht} rx="10" fill={on?"#0b2230":"#0a141c"} stroke={on?c:(tone[k]?c+"88":"#ffffff33")} strokeWidth={on?1.6:1}/>
+<text x={x+w/2} y={y+ht/2} textAnchor="middle" dominantBaseline="central" fill={k=="ctl"?"#fff":"#dbe7ee"} fontSize={k=="ctl"?15:11} fontWeight={k=="ctl"?800:500} letterSpacing="2">{NODES[k][0].toUpperCase()}</text></g>};
+const ins=["auth","host","beh","tam","pol"];
+return <Sec id="architecture"><Tag>ARCHITECTURE</Tag><Title sub="Hover or tap any component to read what it does.">THE ARCHITECTURE</Title>
+<R><div className="g p-4 md:p-8"><div className="overflow-x-auto"><svg viewBox="0 0 920 540" className="w-full min-w-[720px]">
+{ins.map(k=><path key={k} d={`M${B[k][0]+75} 56 C${B[k][0]+75} 95,460 85,460 120`} fill="none" stroke="#22d3ee" strokeOpacity=".6" className="dash"/>)}
+<path d="M460 184V230M460 276V320" stroke="#22d3ee" className="dash"/>
+{["ok","rs","lk"].map(k=><g key={k}><path d={`M460 366C460 385,${B[k][0]+90} 380,${B[k][0]+90} 400`} fill="none" stroke={tone[k]} strokeOpacity=".7" className="dash"/><path d={`M${B[k][0]+90} 442C${B[k][0]+90} 465,460 462,460 486`} fill="none" stroke={tone[k]} strokeOpacity=".4"/></g>)}
+{[...ins,"ctl","eng","dec","ok","rs","lk","res"].map(k=><Nd key={k} k={k}/>)}</svg></div>
+<div className="mt-6 border-t border-white/10 pt-5 min-h-20"><div className={`mono text-xs tracking-widest ${cy}`}>{NODES[h][0].toUpperCase()}</div><p className="text-white/65 mt-2">{NODES[h][1]}</p></div></div></R></Sec>}
+
+function Model(){const C=[["IDENTITY","Who is requesting access?"],["HOST","From which system is access being requested?"],["BEHAVIOR","Is the activity consistent with expected behavior?"],["POLICY","Does the current request satisfy the configured rules?"],["TAMPER","Has the system or controller been physically manipulated?"]];
+const[a,sa]=useState(null);
+return <Sec id="security"><Tag>SECURITY MODEL</Tag><Title>{"ONE DECISION.\nMULTIPLE SIGNALS."}</Title>
+<div className="grid md:grid-cols-5 gap-4">{C.map(([t,d],i)=><R key={t}><div onClick={()=>sa(a==i?null:i)} className={`g p-5 h-full cursor-pointer ${a==i?"border-cyan-300 glow":""}`}><div className={`mono text-xs ${cy}`}>{String(i+1).padStart(2,"0")}</div><div className="font-bold tracking-wider mt-8 mb-2">{t}</div><p className="text-white/55 text-sm">{d}</p></div></R>)}</div>
+<div className="fl"/><div className="g max-w-md mx-auto p-4 flex items-center justify-center text-center mono text-xs tracking-widest glow">ARC POLICY ENGINE</div><div className="fl"/><div className={`text-center font-bold tracking-widest ${cy}`}>ACCESS DECISION</div></Sec>}
+
+const T0={user:"AUTHORIZED",host:"TRUSTED",beh:"NORMAL",tam:"CLEAR",acc:"GRANTED",sys:"SECURE"};
+function Proto(){const[st,ss]=useState(T0);const[step,sp]=useState(["NORMAL"]);const tm=useRef([]);
+const now=()=>new Date().toLocaleTimeString("en-GB");
+const[log,sl]=useState([[now(),"Authentication successful"],[now(),"Protected resource accessed"]]);
+const add=(...m)=>sl(l=>[...l,...m.map(x=>[now(),x])]);
+const clr=()=>{tm.current.forEach(clearTimeout);tm.current=[]};
+const seq=(items,fin)=>{clr();items.forEach((s,i)=>{tm.current.push(setTimeout(()=>{sp(items.slice(0,i+1));if(i==items.length-1)fin()},i*650))})};
+useEffect(()=>clr,[]);
+const act={
+normal:()=>{clr();ss(T0);sp(["NORMAL"]);add("Authentication successful","Protected resource accessed")},
+sus:()=>{seq(["NORMAL","ANOMALY DETECTED","POLICY TRIGGERED","ACCESS RESTRICTED"],()=>{});ss(s=>({...s,beh:"ANOMALY",acc:"RESTRICTED",sys:"ALERT"}));add("Abnormal behavior detected","Policy triggered","Access restricted")},
+tam:()=>{seq(["TAMPER DETECTED","AUTHORIZATION INVALIDATED","SYSTEM LOCKED"],()=>{});ss(s=>({...s,tam:"DETECTED",user:"INVALIDATED",acc:"LOCKED",sys:"LOCKED"}));add("Tamper event detected","Authorization invalidated","System locked")},
+lock:()=>{clr();sp(["ACCESS DENIED"]);ss(s=>({...s,acc:"DENIED",sys:"LOCKED"}));add("Manual lock issued","Access denied")},
+reset:()=>{clr();ss(T0);sp(["NORMAL"]);sl([[now(),"System reset to secure state"]])}};
+const col=v=>["SECURE","AUTHORIZED","TRUSTED","NORMAL","CLEAR","GRANTED"].includes(v)?"text-emerald-300":["ANOMALY","RESTRICTED","ALERT"].includes(v)?"text-amber-300":"text-rose-400";
+const F=[["SYSTEM","sys"],["USER","user"],["HOST","host"],["BEHAVIOR","beh"],["TAMPER","tam"],["ACCESS","acc"]];
+const B=[["NORMAL ACCESS","normal"],["SIMULATE SUSPICIOUS BEHAVIOR","sus"],["SIMULATE TAMPER","tam"],["LOCK SYSTEM","lock"],["RESET","reset"]];
+return <Sec id="prototype"><Tag>INTERACTIVE SOFTWARE DEMONSTRATION</Tag><Title sub="A simulation of the ARC Drive security decision flow.">SOFTWARE PROTOTYPE</Title>
+<R><div className="g p-6 md:p-8">
+<div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">{F.map(([l,k])=><div key={k} className="rounded-lg bg-black/40 border border-white/10 p-4"><div className="mono text-[10px] text-white/40 tracking-widest">{l}</div><div className={`font-bold mt-1 text-sm transition-colors ${col(st[k])}`}>{st[k]}</div></div>)}</div>
+<div className="flex flex-wrap gap-2 items-center mb-6 min-h-10">{step.map((s,i)=><React.Fragment key={s}><span className={`mono text-[11px] px-3 py-1.5 rounded-full border ${i==step.length-1?"border-cyan-300 text-cyan-300 glow":"border-white/15 text-white/50"}`}>{s}</span>{i<step.length-1&&<span className="text-white/30">→</span>}</React.Fragment>)}</div>
+<div className="flex flex-wrap gap-2 mb-8">{B.map(([l,k])=><button key={k} onClick={act[k]} className="mono text-[11px] tracking-wider px-4 py-2.5 rounded-lg border border-white/20 hover:border-cyan-300 hover:text-cyan-300 active:scale-95 transition">{l}</button>)}</div>
+<div className="mono text-[10px] text-white/40 tracking-widest mb-2">LIVE AUDIT LOG</div>
+<div className="bg-black/50 rounded-lg border border-white/10 p-4 h-48 overflow-y-auto mono text-xs flex flex-col-reverse"><div>{log.map(([t,m],i)=><div key={i} className="py-1"><span className={cy}>{t}</span> <span className="text-white/70 ml-3">{m}</span></div>)}</div></div>
+<p className="text-white/35 text-xs mt-4">This is a simulation. No hardware is connected.</p></div></R></Sec>}
+
+function Hardware(){const Bx=(x,y,w,h,t,hl)=><g key={t}><rect x={x} y={y} width={w} height={h} rx="12" fill="#06121a" stroke={hl?"#22d3ee":"#ffffff44"} className={hl?"glow":""}/><text x={x+w/2} y={y+(hl?26:h/2)} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize="10.5" letterSpacing="2.5">{t}</text></g>;
+const Ch=(x,t1,t2,d)=><g key={t1}><rect x={x} y="70" width="100" height="100" rx="8" fill="#0a1c27" stroke="#22d3ee66" strokeDasharray={d}/><text x={x+50} y="110" textAnchor="middle" dominantBaseline="central" fill="#22d3ee" fontSize="9" letterSpacing="1.5">{t1}</text><text x={x+50} y="128" textAnchor="middle" dominantBaseline="central" fill="#22d3ee" fontSize="9" letterSpacing="1.5">{t2}</text></g>;
+return <Sec><Tag>HARDWARE CONCEPT</Tag><Title>HARDWARE CONCEPT</Title>
+<R><div className="g p-6 md:p-10"><div className="overflow-x-auto"><svg viewBox="0 0 860 200" className="w-full min-w-[640px]">
+<path d="M205 100H300M570 100H665" stroke="#22d3ee" className="dash"/>
+{Bx(15,40,190,120,"HOST INTERFACE")}{Bx(300,20,270,160,"ARC CONTROLLER",1)}{Ch(318,"SECURITY /","POLICY ENGINE","")}{Ch(442,"TAMPER","SENSOR","3 3")}{Bx(665,40,180,120,"PROTECTED RESOURCE")}</svg></div>
+<div className="flex justify-between items-end flex-wrap gap-4 mt-6"><p className="text-white/60 max-w-xl">The hardware direction explores placing security enforcement between the host and protected resource.</p><div className="sm:text-right"><div className={`mono text-xs ${cy}`}>CONCEPTUAL PROTOTYPE</div><div className="mono text-xs text-white/40 mt-1">Hardware prototype in development. Not a final product render.</div></div></div></div></R></Sec>}
+
+function Stack(){const S=[["Frontend","React / modern web UI"],["Security Console","ARC monitoring interface"],["Policy Engine","Access decision logic"],["Audit Layer","Security event history"],["Prototype Environment","Local / offline demonstration"]];
+return <Sec><Tag>TECHNOLOGY</Tag><Title>THE SOFTWARE LAYER</Title><div className="grid md:grid-cols-5 gap-4">{S.map(([t,d])=><R key={t}><div className="g p-5 h-full"><div className="font-bold mb-2">{t}</div><p className="text-white/55 text-sm">{d}</p></div></R>)}</div></Sec>}
+
+function Use(){const U=[["Secure Removable Storage","Protect sensitive information from unauthorized access or copying."],["Research Environments","Add an independent security layer around sensitive resources."],["Industrial / OT","Explore access control for specialized equipment and isolated environments."],["Legacy / Isolated Systems","Potentially provide a control layer where traditional network-based security is limited."]];
+return <Sec><Tag>POTENTIAL USE CASES</Tag><Title>WHERE THIS COULD MATTER</Title><div className="grid md:grid-cols-2 gap-5">{U.map(([t,d])=><R key={t}><div className="g p-7 h-full"><div className="text-xl font-bold mb-2">{t}</div><p className="text-white/55">{d}</p></div></R>)}</div></Sec>}
+
+function Flow(){const S=["USER","AUTHENTICATION","HOST VERIFICATION","BEHAVIOR MONITORING","POLICY EVALUATION","ACCESS DECISION"];const[i,si]=useState(0);
+useEffect(()=>{const t=setInterval(()=>si(x=>(x+1)%8),900);return()=>clearInterval(t)},[]);
+return <section className="min-h-screen flex flex-col justify-center px-6 md:px-16 py-24 bg-gradient-to-b from-transparent via-cyan-950/10 to-transparent"><div className="max-w-3xl mx-auto w-full">
+<Tag>SECURITY FLOW</Tag>{S.map((s,k)=><div key={s}><div className={`g px-6 py-3.5 flex items-center justify-center mono text-xs tracking-widest text-center transition-all duration-500 ${k<=i?"border-cyan-300 text-cyan-300 glow":"text-white/40"}`}>{s}</div>{k<5&&<div className="fl"/>}</div>)}
+<div className="grid grid-cols-3 gap-3 mt-8">{[["ALLOW","emerald"],["RESTRICT","amber"],["LOCK","rose"]].map(([t,c],k)=><div key={t} className={`rounded-xl border p-5 flex items-center justify-center text-center mono text-sm tracking-widest transition-all duration-500 ${i>=6?(i-6==k||i==7&&k==2?`border-${c}-400 text-${c}-300`:"border-white/10 text-white/30"):"border-white/10 text-white/30"}`}>{t}</div>)}</div></div></section>}
+
+function Diff(){const D=["Hardware independence","Continuous access decisions","Direct resource gating","Behavior-aware policies","Tamper response"];const P=["is designed to operate independently of the host.","explores access decisions that update as conditions change.","explores gating the resource directly.","explores policies that account for behavior.","is designed to respond to tamper events."];
+return <Sec><Tag>RESEARCH & DIFFERENTIATION</Tag><Title>WHAT MAKES THE IDEA DIFFERENT?</Title>
+{D.map((d,i)=><R key={d}><div className="flex gap-6 items-baseline py-5 border-t border-white/10"><span className={`mono text-sm ${cy}`}>{String(i+1).padStart(2,"0")}</span><div><div className="text-2xl font-bold">{d}</div><p className="text-white/50">ARC Drive {P[i]}</p></div></div></R>)}</Sec>}
+
+function Status(){const T=[["2026","Research & Problem Analysis","COMPLETED"],["2026","ARC Drive Concept","COMPLETED"],["2026","Software Security Console","IN DEVELOPMENT"],["2026","Prototype Architecture","IN DEVELOPMENT"],["NEXT","Hardware Controller Prototype","IN DEVELOPMENT"],["NEXT","Behavior Monitoring","PLANNED"],["NEXT","Hardware Validation","PLANNED"],["NEXT","Real-world Testing","PLANNED"]];
+const c={COMPLETED:"text-emerald-300 border-emerald-400/40","IN DEVELOPMENT":"text-cyan-300 border-cyan-300/40",PLANNED:"text-white/50 border-white/20"};
+return <Sec><Tag>PROJECT STATUS</Tag><Title>WHERE WE ARE</Title><div className="border-l border-cyan-300/30 ml-2">{T.map(([y,t,s])=><R key={t}><div className="relative pl-8 py-4 flex flex-wrap gap-4 items-center"><span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-cyan-300"/><span className="mono text-xs text-white/40 w-12">{y}</span><span className="font-medium text-lg flex-1">{t}</span><span className={`mono text-[10px] px-3 py-1 rounded-full border ${c[s]}`}>{s}</span></div></R>)}</div></Sec>}
+
+function Road(){const P=["Research","Software Prototype","Hardware Controller","Behavior Engine","Tamper Detection","Integrated Prototype","Testing & Validation"];
+return <Sec id="roadmap"><Tag>ROADMAP</Tag><Title>ROADMAP</Title><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">{P.map((p,i)=><R key={p}><div className="g p-5 h-full"><div className={`mono text-xs ${cy}`}>PHASE {String(i+1).padStart(2,"0")}</div><div className="font-bold text-lg mt-6">{p}</div></div></R>)}</div></Sec>}
+
+function CTA(){return <section className="min-h-screen flex items-center justify-center text-center px-6 relative overflow-hidden"><div className="absolute w-[700px] h-[700px] rounded-full bg-cyan-500/10 blur-3xl"/>
+<R className="relative max-w-5xl"><h2 className="h text-4xl md:text-7xl">THE NEXT LAYER OF ACCESS CONTROL<br/>STARTS AT THE RESOURCE.</h2><p className="text-white/60 text-xl mt-8">ARC Drive is an exploration of hardware-enforced, dynamic security.</p>
+<div className="mt-10 flex flex-wrap gap-4 justify-center"><Btn href="#prototype" solid>Explore Prototype</Btn><Btn href="#architecture">View Architecture</Btn></div></R></section>}
+
+function Footer(){const L=[["Overview","overview"],["Architecture","architecture"],["Security","security"],["Roadmap","roadmap"]];
+return <footer className="border-t border-white/10 px-6 md:px-16 py-12"><div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-8"><div><div className="font-extrabold tracking-[.25em]">ARC <span className={cy}>DRIVE</span></div><p className="text-white/50 text-sm mt-3">Powered by Intelligence.<br/>Protected by Time.</p></div>
+<div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-white/60 content-start">{L.map(([n,i])=><a key={i} href={"#"+i} className="hover:text-cyan-300">{n}</a>)}</div></div>
+<p className="max-w-7xl mx-auto mono text-xs text-white/30 mt-10">© 2026 ARC Drive — Prototype Project</p></footer>}
+
+function App(){return <><Nav/><Hero/><Intro/><Problem/><Existing/><Approach/><Arch/><Model/><Proto/><Hardware/><Stack/><Use/><Flow/><Diff/><Status/><Road/><CTA/><Footer/></>}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
